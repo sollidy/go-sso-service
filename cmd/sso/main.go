@@ -3,6 +3,7 @@ package main
 import (
 	"log/slog"
 	"os"
+	"sso-service/app"
 	"sso-service/internal/config"
 	"time"
 
@@ -19,7 +20,10 @@ func main() {
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
 	log.Debug("starting application", slog.Any("cfg", cfg))
-	// TODO: init app
+
+	application := app.New(log, cfg.GRPC.Port, cfg.TokenTTL)
+	application.GRPCSrv.MustRun()
+
 	// TODO: start app
 }
 
