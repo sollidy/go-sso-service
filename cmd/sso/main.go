@@ -3,8 +3,10 @@ package main
 import (
 	"log/slog"
 	"os"
+	"os/signal"
 	"sso-service/app"
 	"sso-service/internal/config"
+	"syscall"
 	"time"
 
 	"github.com/lmittmann/tint"
@@ -22,9 +24,19 @@ func main() {
 	log.Debug("starting application", slog.Any("cfg", cfg))
 
 	application := app.New(log, cfg.GRPC.Port, cfg.TokenTTL)
-	application.GRPCSrv.MustRun()
 
-	// TODO: start app
+	go application.GRPCSrv.MustRun()
+
+	// Graceful shutdown
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
+
+	sign := <-stop
+
+	application.GRPCSrv.Stop()
+
+	log.Info("application stopped", slog.String("signal", sign.String()))
 }
 
 func setupLogger(env string) *slog.Logger {
