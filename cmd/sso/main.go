@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"sso-service/app"
+	"sso-service/internal/app"
 	"sso-service/internal/config"
 	"syscall"
 	"time"
