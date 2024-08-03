@@ -9,6 +9,7 @@ require (
 	github.com/sollidy/go-sso-protos v0.0.5
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.23.0
+	golang.org/x/sync v0.7.0
 	google.golang.org/grpc v1.65.0
 )
 
