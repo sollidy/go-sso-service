@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload"
 	"github.com/lmittmann/tint"
 )
 
