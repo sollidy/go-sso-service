@@ -1,0 +1,87 @@
+package pg
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"sso-service/internal/domain/models"
+	"sso-service/prisma/db"
+)
+
+type Storage struct {
+	log *slog.Logger
+	db  *db.PrismaClient
+}
+
+func New(log *slog.Logger) (*Storage, error) {
+	const op = "storage.pg.New"
+	client := db.NewClient()
+	if err := client.Prisma.Connect(); err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	return &Storage{db: client, log: log}, nil
+}
+
+func (s *Storage) Close() error {
+	const op = "storage.pg.Close"
+	if err := s.db.Prisma.Disconnect(); err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	s.log.With(slog.String("op", op)).Info("disconnected from database")
+	return nil
+}
+
+func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
+	const op = "storage.pg.SaveUser"
+	user, err := s.db.User.CreateOne(
+		db.User.Email.Set(email),
+		db.User.PassHash.Set(passHash),
+	).Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("%s: %w", op, err)
+	}
+	return int64(user.ID), nil
+}
+
+func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
+	const op = "storage.pg.User"
+	user, err := s.db.User.FindUnique(
+		db.User.Email.Equals(email),
+	).Exec(ctx)
+
+	userData := models.User{
+		ID:       int64(user.ID),
+		Email:    user.Email,
+		PassHash: user.PassHash,
+	}
+	if err != nil {
+		return userData, fmt.Errorf("%s: %w", op, err)
+	}
+	return userData, nil
+}
+
+func (s *Storage) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	const op = "storage.pg.IsAdmin"
+	user, err := s.db.User.FindUnique(
+		db.User.ID.Equals(int(userID)),
+	).Exec(ctx)
+	if err != nil {
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+	return user.IsAdmin, nil
+}
+
+func (s *Storage) App(ctx context.Context, appID int) (models.App, error) {
+	const op = "storage.pg.App"
+	app, err := s.db.App.FindUnique(
+		db.App.ID.Equals(appID),
+	).Exec(ctx)
+	if err != nil {
+		return models.App{}, fmt.Errorf("%s: %w", op, err)
+	}
+	return models.App{
+		ID:     int(app.ID),
+		Name:   app.Name,
+		Secret: app.Secret,
+	}, nil
+}

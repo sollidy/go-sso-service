@@ -36,8 +36,9 @@ func main() {
 	sign := <-stop
 
 	application.GRPCSrv.Stop()
+	application.Storage.Close()
 
-	log.Info("application stopped", slog.String("signal", sign.String()))
+	log.Warn("application stopped", slog.String("signal", sign.String()))
 }
 
 func setupLogger(env string) *slog.Logger {
