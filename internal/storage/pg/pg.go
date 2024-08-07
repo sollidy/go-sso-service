@@ -3,32 +3,16 @@ package pg
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"sso-service/internal/domain/models"
 	"sso-service/prisma/db"
 )
 
 type Storage struct {
-	log *slog.Logger
-	db  *db.PrismaClient
+	db *db.PrismaClient
 }
 
-func New(log *slog.Logger) (*Storage, error) {
-	const op = "storage.pg.New"
-	client := db.NewClient()
-	if err := client.Prisma.Connect(); err != nil {
-		return nil, fmt.Errorf("%s: %w", op, err)
-	}
-	return &Storage{db: client, log: log}, nil
-}
-
-func (s *Storage) Close() error {
-	const op = "storage.pg.Close"
-	if err := s.db.Prisma.Disconnect(); err != nil {
-		return fmt.Errorf("%s: %w", op, err)
-	}
-	s.log.With(slog.String("op", op)).Info("disconnected from database")
-	return nil
+func New(db *db.PrismaClient) *Storage {
+	return &Storage{db: db}
 }
 
 func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {

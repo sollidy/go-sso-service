@@ -28,6 +28,8 @@ func main() {
 
 	go application.GRPCSrv.MustRun()
 
+	go application.Storage.MustConnect()
+
 	// Graceful shutdown
 
 	stop := make(chan os.Signal, 1)
