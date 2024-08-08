@@ -3,6 +3,7 @@ module sso-service
 go 1.22.5
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.0.4
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/joho/godotenv v1.5.1

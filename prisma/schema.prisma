@@ -12,6 +12,8 @@ model User {
   email     String  @unique
   pass_hash Bytes
   is_admin  Boolean @default(false)
+
+  @@index([email])
 }
 
 model App {

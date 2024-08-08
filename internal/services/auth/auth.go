@@ -143,6 +143,7 @@ func (a *Auth) RegisterNewUser(
 		log.Error("failed to save new user", sl.Err(err))
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
+	log.Info("user saved", slog.String("email", email))
 
 	return id, nil
 }
