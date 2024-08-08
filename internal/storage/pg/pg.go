@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sso-service/internal/domain/models"
+	"sso-service/internal/storage"
 	"sso-service/prisma/db"
 )
 
@@ -22,6 +23,9 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 		db.User.PassHash.Set(passHash),
 	).Exec(ctx)
 	if err != nil {
+		if _, err := db.IsErrUniqueConstraint(err); err {
+			return 0, fmt.Errorf("%s: %w", op, storage.ErrUserExists)
+		}
 		return 0, fmt.Errorf("%s: %w", op, err)
 	}
 	return int64(user.ID), nil
@@ -33,13 +37,17 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 		db.User.Email.Equals(email),
 	).Exec(ctx)
 
-	userData := models.User{
+	userData := models.User{}
+	if err != nil {
+		if err := db.IsErrNotFound(err); err {
+			return userData, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
+		return userData, fmt.Errorf("%s: %w", op, err)
+	}
+	userData = models.User{
 		ID:       int64(user.ID),
 		Email:    user.Email,
 		PassHash: user.PassHash,
-	}
-	if err != nil {
-		return userData, fmt.Errorf("%s: %w", op, err)
 	}
 	return userData, nil
 }
@@ -50,6 +58,9 @@ func (s *Storage) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 		db.User.ID.Equals(int(userID)),
 	).Exec(ctx)
 	if err != nil {
+		if err := db.IsErrNotFound(err); err {
+			return false, fmt.Errorf("%s: %w", op, storage.ErrUserNotFound)
+		}
 		return false, fmt.Errorf("%s: %w", op, err)
 	}
 	return user.IsAdmin, nil
@@ -61,6 +72,9 @@ func (s *Storage) App(ctx context.Context, appID int) (models.App, error) {
 		db.App.ID.Equals(appID),
 	).Exec(ctx)
 	if err != nil {
+		if err := db.IsErrNotFound(err); err {
+			return models.App{}, fmt.Errorf("%s: %w", op, storage.ErrAppNotFound)
+		}
 		return models.App{}, fmt.Errorf("%s: %w", op, err)
 	}
 	return models.App{

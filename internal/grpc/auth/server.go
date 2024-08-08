@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"sso-service/internal/services/auth"
 
 	ssov1 "github.com/sollidy/go-sso-protos/gen/go/proto/sso"
 	"google.golang.org/grpc"
@@ -36,7 +39,12 @@ func (s *serverAPI) Login(ctx context.Context, req *ssov1.LoginRequest) (*ssov1.
 	token, err := s.auth.Login(ctx, req.GetEmail(), req.GetPassword(), int(req.GetAppId()))
 
 	if err != nil {
-		// TODO: return different errors
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
+		if errors.Is(err, auth.ErrAppIdNotFound) {
+			return nil, status.Error(codes.InvalidArgument, "app_id not found")
+		}
 		return nil, status.Error(codes.Internal, "internal Error")
 	}
 
@@ -52,7 +60,10 @@ func (s *serverAPI) Register(ctx context.Context, req *ssov1.RegisterRequest) (*
 
 	userID, err := s.auth.RegisterNewUser(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
-		// TODO: return different errors
+		if errors.Is(err, auth.ErrUserExists) {
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
+		}
+		fmt.Println(err)
 		return nil, status.Error(codes.Internal, "internal Error")
 	}
 
@@ -69,7 +80,9 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *ssov1.IsAdminRequest) (*ss
 
 	isAdmin, err := s.auth.IsAdmin(ctx, req.GetUserId())
 	if err != nil {
-		// TODO: return different errors
+		if errors.Is(err, auth.ErrInvalidCredentials) {
+			return nil, status.Error(codes.InvalidArgument, "invalid credentials")
+		}
 		return nil, status.Error(codes.Internal, "internal Error")
 	}
 
