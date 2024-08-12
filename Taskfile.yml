@@ -10,3 +10,11 @@ tasks:
   db-migrate:
     desc: Migrate database
     cmd: go run github.com/steebchen/prisma-client-go migrate dev {{.CLI_ARGS}}
+
+  prepare-test-data:
+    desc: 'Prepare test data: add test App with app_id: 1'
+    cmd: go run cmd/migrate-data/main.go
+
+  test:
+    desc: Run tests
+    cmd: go test -v ./tests
