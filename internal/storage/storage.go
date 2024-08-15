@@ -42,6 +42,6 @@ func (s *Storage) Close() error {
 	if err := s.DB.Prisma.Disconnect(); err != nil {
 		return fmt.Errorf("%s: %w", op, err)
 	}
-	s.log.With(slog.String("op", op)).Info("disconnected from database")
+	s.log.With(slog.String("op", op)).Info("DISCONNECTED from database")
 	return nil
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -23,12 +24,15 @@ func main() {
 	cfg := config.MustLoad()
 	log := setupLogger(cfg.Env)
 	log.Debug("starting application", slog.Any("cfg", cfg))
+	ctx, cancel := context.WithCancel(context.Background())
 
 	application := app.New(log, cfg.GRPC.Port, cfg.TokenTTL)
 
 	go application.GRPCSrv.MustRun()
 
 	go application.Storage.MustConnect()
+
+	application.Sender.StartProcessingEvents(ctx, 5*time.Second)
 
 	// Graceful shutdown
 
@@ -37,10 +41,11 @@ func main() {
 
 	sign := <-stop
 
+	cancel()
 	application.GRPCSrv.Stop()
 	application.Storage.Close()
 
-	log.Warn("application stopped", slog.String("signal", sign.String()))
+	log.Warn("STOPED application", slog.String("signal", sign.String()))
 }
 
 func setupLogger(env string) *slog.Logger {

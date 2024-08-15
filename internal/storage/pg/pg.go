@@ -14,7 +14,8 @@ type Storage struct {
 }
 
 var (
-	errUniqueConstraint = "Unique constraint failed"
+	errUniqueConstraint  = "Unique constraint failed"
+	userCreatedEventType = "UserCreated"
 )
 
 func New(db *db.PrismaClient) *Storage {
@@ -24,7 +25,7 @@ func New(db *db.PrismaClient) *Storage {
 func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
 	const op = "storage.pg.SaveUser"
 	event := models.Event{
-		Type:    "UserCreated",
+		Type:    userCreatedEventType,
 		Payload: fmt.Sprintf("User %s created", email),
 	}
 	addUser := s.db.User.CreateOne(
@@ -104,4 +105,35 @@ func (s *Storage) App(ctx context.Context, appID int) (models.App, error) {
 		Name:   app.Name,
 		Secret: app.Secret,
 	}, nil
+}
+
+func (s *Storage) GetNewEvent(ctx context.Context) (models.Event, error) {
+	const op = "storage.pg.GetNewEvent"
+	event, err := s.db.Event.FindFirst(
+		db.Event.Status.Equals("NEW"),
+	).Exec(ctx)
+	if err != nil {
+		if err := db.IsErrNotFound(err); err {
+			return models.Event{}, nil // events with status "NEW" not found
+		}
+		return models.Event{}, fmt.Errorf("%s: %w", op, err)
+	}
+	return models.Event{
+		Id:      int(event.ID),
+		Type:    event.EventType,
+		Payload: event.Payload,
+	}, nil
+}
+
+func (s *Storage) SetEventDone(ctx context.Context, eventId int) error {
+	const op = "storage.pg.UpdateEvent"
+	_, err := s.db.Event.FindUnique(
+		db.Event.ID.Equals(eventId),
+	).Update(
+		db.Event.Status.Set("DONE"),
+	).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+	return nil
 }
