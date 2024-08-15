@@ -18,3 +18,8 @@ tasks:
   test:
     desc: Run tests
     cmd: go test -v ./tests
+
+  clean-cache-tests:
+    aliases: [clean]
+    desc: Clean test cache
+    cmd: go clean -testcache

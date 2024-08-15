@@ -21,3 +21,16 @@ model App {
   name   String
   secret String
 }
+
+model Event {
+  id         Int      @id @default(autoincrement())
+  event_type String
+  payload    String
+  status     Status   @default(NEW)
+  created_at DateTime @default(now())
+}
+
+enum Status {
+  NEW
+  DONE
+}
