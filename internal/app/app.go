@@ -6,7 +6,7 @@ import (
 	"sso-service/internal/services/auth"
 	eventsender "sso-service/internal/services/event-sender"
 	"sso-service/internal/storage"
-	"sso-service/internal/storage/pg"
+	"sso-service/internal/storage/repository"
 	"time"
 )
 
@@ -22,15 +22,15 @@ func New(
 	tokenTTL time.Duration,
 ) *App {
 
-	storageClient := storage.New(log)
-	storage := pg.New(storageClient.DB)
-	authService := auth.New(log, storage, storage, storage, tokenTTL)
-	senderService := eventsender.New(log, storage)
-	grpcApp := grpcapp.New(log, authService, grpcPort)
+	a := &App{}
 
-	return &App{
-		GRPCSrv: grpcApp,
-		Storage: storageClient,
-		Sender:  senderService,
-	}
+	a.Storage = storage.New(log)
+
+	repo := repository.New(a.Storage.DB)
+	authService := auth.New(log, repo, repo, repo, tokenTTL)
+
+	a.Sender = eventsender.New(log, repo)
+	a.GRPCSrv = grpcapp.New(log, authService, grpcPort)
+
+	return a
 }

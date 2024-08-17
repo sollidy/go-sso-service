@@ -1,4 +1,4 @@
-package pg
+package repository
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-type Storage struct {
+type Repository struct {
 	db *db.PrismaClient
 }
 
@@ -18,12 +18,12 @@ var (
 	userCreatedEventType = "UserCreated"
 )
 
-func New(db *db.PrismaClient) *Storage {
-	return &Storage{db: db}
+func New(db *db.PrismaClient) *Repository {
+	return &Repository{db: db}
 }
 
-func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
-	const op = "storage.pg.SaveUser"
+func (s *Repository) SaveUser(ctx context.Context, email string, passHash []byte) (int64, error) {
+	const op = "repository.SaveUser"
 	event := models.Event{
 		Type:    userCreatedEventType,
 		Payload: fmt.Sprintf("User %s created", email),
@@ -46,7 +46,7 @@ func (s *Storage) SaveUser(ctx context.Context, email string, passHash []byte) (
 	return int64(addUser.Result().ID), nil
 }
 
-func (s *Storage) saveEvent(event models.Event) db.EventUniqueTxResult {
+func (s *Repository) saveEvent(event models.Event) db.EventUniqueTxResult {
 	addEvent := s.db.Event.CreateOne(
 		db.Event.EventType.Set(event.Type),
 		db.Event.Payload.Set(event.Payload),
@@ -54,8 +54,8 @@ func (s *Storage) saveEvent(event models.Event) db.EventUniqueTxResult {
 	return addEvent
 }
 
-func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
-	const op = "storage.pg.User"
+func (s *Repository) User(ctx context.Context, email string) (models.User, error) {
+	const op = "repository.User"
 	user, err := s.db.User.FindUnique(
 		db.User.Email.Equals(email),
 	).Exec(ctx)
@@ -75,8 +75,8 @@ func (s *Storage) User(ctx context.Context, email string) (models.User, error) {
 	return userData, nil
 }
 
-func (s *Storage) IsAdmin(ctx context.Context, userID int64) (bool, error) {
-	const op = "storage.pg.IsAdmin"
+func (s *Repository) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	const op = "repository.IsAdmin"
 	user, err := s.db.User.FindUnique(
 		db.User.ID.Equals(int(userID)),
 	).Exec(ctx)
@@ -89,8 +89,8 @@ func (s *Storage) IsAdmin(ctx context.Context, userID int64) (bool, error) {
 	return user.IsAdmin, nil
 }
 
-func (s *Storage) App(ctx context.Context, appID int) (models.App, error) {
-	const op = "storage.pg.App"
+func (s *Repository) App(ctx context.Context, appID int) (models.App, error) {
+	const op = "repository.App"
 	app, err := s.db.App.FindUnique(
 		db.App.ID.Equals(appID),
 	).Exec(ctx)
@@ -107,8 +107,8 @@ func (s *Storage) App(ctx context.Context, appID int) (models.App, error) {
 	}, nil
 }
 
-func (s *Storage) GetNewEvent(ctx context.Context) (models.Event, error) {
-	const op = "storage.pg.GetNewEvent"
+func (s *Repository) GetNewEvent(ctx context.Context) (models.Event, error) {
+	const op = "repository.GetNewEvent"
 	event, err := s.db.Event.FindFirst(
 		db.Event.Status.Equals("NEW"),
 	).Exec(ctx)
@@ -125,8 +125,8 @@ func (s *Storage) GetNewEvent(ctx context.Context) (models.Event, error) {
 	}, nil
 }
 
-func (s *Storage) SetEventDone(ctx context.Context, eventId int) error {
-	const op = "storage.pg.UpdateEvent"
+func (s *Repository) SetEventDone(ctx context.Context, eventId int) error {
+	const op = "repository.UpdateEvent"
 	_, err := s.db.Event.FindUnique(
 		db.Event.ID.Equals(eventId),
 	).Update(

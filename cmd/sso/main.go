@@ -7,22 +7,16 @@ import (
 	"os/signal"
 	"sso-service/internal/app"
 	"sso-service/internal/config"
+	"sso-service/internal/lib/logger"
 	"syscall"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/lmittmann/tint"
-)
-
-const (
-	envLocal = "local"
-	envDev   = "dev"
-	envProd  = "prod"
 )
 
 func main() {
 	cfg := config.MustLoad()
-	log := setupLogger(cfg.Env)
+	log := logger.SetupLogger(cfg.Env)
 	log.Debug("starting application", slog.Any("cfg", cfg))
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -46,22 +40,4 @@ func main() {
 	application.Storage.Close()
 
 	log.Warn("STOPED application", slog.String("signal", sign.String()))
-}
-
-func setupLogger(env string) *slog.Logger {
-	var log *slog.Logger
-	tintHandler := tint.NewHandler(os.Stdout, &tint.Options{
-		Level:      slog.LevelDebug,
-		TimeFormat: time.TimeOnly,
-	})
-
-	switch env {
-	case envLocal:
-		log = slog.New(tintHandler)
-	case envDev:
-		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
-	case envProd:
-		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}))
-	}
-	return log
 }
