@@ -105,6 +105,12 @@ func TestRegisterLogin_TableTest(t *testing.T) {
 			"email is required",
 		},
 		{
+			"Invalid email",
+			"test",
+			gofakeit.Password(true, true, true, true, false, passDefaultLen),
+			"invalid email",
+		},
+		{
 			"Empty password",
 			gofakeit.Email(),
 			"",

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"sso-service/internal/services/auth"
 
 	ssov1 "github.com/sollidy/go-sso-protos/gen/go/proto/sso"
@@ -107,6 +108,10 @@ func validateLogin(req *ssov1.LoginRequest) error {
 func validateRegister(req *ssov1.RegisterRequest) error {
 	if req.GetEmail() == "" {
 		return status.Error(codes.InvalidArgument, "email is required")
+	}
+	_, err := mail.ParseAddress(req.GetEmail())
+	if err != nil {
+		return status.Error(codes.InvalidArgument, "invalid email")
 	}
 	if req.GetPassword() == "" {
 		return status.Error(codes.InvalidArgument, "password is required")
