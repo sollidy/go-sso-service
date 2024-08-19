@@ -7,9 +7,9 @@ import (
 )
 
 func main() {
-	// withWaiting()
-	// rangeBuffered()
-	// selectChan()
+	withWaiting()
+	rangeBuffered()
+	selectChan()
 	writeChanByTimer()
 }
 

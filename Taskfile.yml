@@ -23,3 +23,7 @@ tasks:
     aliases: [clean]
     desc: Clean test cache
     cmd: go clean -testcache
+
+  lint:
+    desc: Lint code
+    cmd: golangci-lint run

@@ -43,10 +43,12 @@ func (s *Sender) StartProcessingEvents(ctx context.Context, handlePeriod time.Du
 				continue
 			}
 
-			s.SendMessage(ctx, event)
+			if err := s.SendMessage(ctx, event); err != nil {
+				log.Error("failed to send message", sl.Err(err))
+				continue
+			}
 
 			if err := s.eventProvider.SetEventDone(ctx, event.Id); err != nil {
-
 				log.Error("failed to get new event", sl.Err(err))
 				continue
 			}

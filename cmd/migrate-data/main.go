@@ -15,7 +15,7 @@ const (
 
 func main() {
 	storage := storage.New(slog.Default())
-	storage.Connect()
+	storage.MustConnect()
 	prisma := storage.DB
 	ctx := context.Background()
 
